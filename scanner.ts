@@ -93,10 +93,31 @@ export class Scanner {
       case "\n":
         this.line++;
         break;
+      case '"':
+        this.string();
+        break;
       default:
         Lox.error(this.line, "Unexpected character.");
         break;
     }
+  }
+
+  private string() {
+    while (this.peek() !== '"' && !this.isAtEnd()) {
+      if (this.peek() === "\n") {
+        this.line++;
+      }
+      this.advance();
+    }
+    if (this.isAtEnd()) {
+      Lox.error(this.line, "Unterminated string.");
+      return;
+    }
+    // Consume the closing "
+    this.advance();
+
+    const value = this.source.substring(this.start + 1, this.current - 1);
+    this.addToken(TokenType.STRING, value);
   }
 
   private advance() {
@@ -105,6 +126,7 @@ export class Scanner {
 
   private addToken(type: TokenType, literal: any = null) {
     const text = this.source.substring(this.start, this.current);
+    console.log(`Added token: ${text} (${type})`);
     this.tokens.push(new Token(type, text, literal, this.line));
   }
 
