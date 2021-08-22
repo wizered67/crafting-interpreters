@@ -2,6 +2,25 @@ import { Lox } from ".";
 import { Token } from "./token";
 import { TokenType } from "./tokenType";
 
+const keywords: Record<string, TokenType> = {
+  and: TokenType.AND,
+  class: TokenType.CLASS,
+  else: TokenType.ELSE,
+  false: TokenType.FALSE,
+  for: TokenType.FOR,
+  fun: TokenType.FUN,
+  if: TokenType.IF,
+  nil: TokenType.NIL,
+  or: TokenType.OR,
+  print: TokenType.PRINT,
+  return: TokenType.RETURN,
+  super: TokenType.SUPER,
+  this: TokenType.THIS,
+  true: TokenType.TRUE,
+  var: TokenType.VAR,
+  while: TokenType.WHILE,
+};
+
 export class Scanner {
   private readonly source: string;
   private readonly tokens: Token[] = [];
@@ -97,6 +116,14 @@ export class Scanner {
         this.string();
         break;
       default:
+        if (isDigit(c)) {
+          this.number();
+          break;
+        }
+        if (isAlpha(c)) {
+          this.identifier();
+          break;
+        }
         Lox.error(this.line, "Unexpected character.");
         break;
     }
@@ -120,13 +147,37 @@ export class Scanner {
     this.addToken(TokenType.STRING, value);
   }
 
+  private number() {
+    while (isDigit(this.peek())) {
+      this.advance();
+    }
+    if (this.peek() === "." && isDigit(this.peekNext())) {
+      // Consume the "."
+      this.advance();
+
+      while (isDigit(this.peek())) {
+        this.advance();
+      }
+    }
+
+    const numberString = this.source.substring(this.start, this.current);
+    this.addToken(TokenType.NUMBER, parseFloat(numberString));
+  }
+
+  private identifier() {
+    while (isAlphaNumeric(this.peek())) {
+      this.advance();
+    }
+    const text = this.source.substring(this.start, this.current);
+    this.addToken(keywords[text] || TokenType.IDENTIFIER);
+  }
+
   private advance() {
     return this.source.charAt(this.current++);
   }
 
   private addToken(type: TokenType, literal: any = null) {
     const text = this.source.substring(this.start, this.current);
-    console.log(`Added token: ${text} (${type})`);
     this.tokens.push(new Token(type, text, literal, this.line));
   }
 
@@ -147,4 +198,23 @@ export class Scanner {
     }
     return this.source.charAt(this.current);
   }
+
+  private peekNext(): string {
+    if (this.current + 1 >= this.source.length) {
+      return "\0";
+    }
+    return this.source.charAt(this.current + 1);
+  }
+}
+
+function isDigit(c: string) {
+  return c >= "0" && c <= "9";
+}
+
+function isAlpha(c: string) {
+  return (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "_";
+}
+
+function isAlphaNumeric(c: string) {
+  return isAlpha(c) || isDigit(c);
 }
