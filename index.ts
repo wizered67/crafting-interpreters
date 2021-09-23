@@ -1,13 +1,17 @@
 import * as fs from "fs";
 import * as readline from "readline";
 import { printAst } from "./astPrinter";
+import { Interpreter } from "./interpreter";
 import { Parser } from "./parser";
+import { RuntimeError } from "./RuntimeError";
 import { Scanner } from "./scanner";
 import { Token } from "./token";
 import { TokenType } from "./tokenType";
 
 export class Lox {
+  static readonly interpreter = new Interpreter();
   static hadError = false;
+  static hadRuntimeError = false;
 
   static main(args: string[]) {
     if (args.length > 1) {
@@ -25,6 +29,9 @@ export class Lox {
     Lox.run(fileBuffer.toString());
     if (Lox.hadError) {
       process.exit(65);
+    }
+    if (Lox.hadRuntimeError) {
+      process.exit(70);
     }
   }
 
@@ -51,7 +58,7 @@ export class Lox {
     if (this.hadError || !expr) {
       return;
     }
-    console.log(printAst(expr));
+    this.interpreter.interpret(expr);
   }
 
   private static report(line: number, where: string, message: string) {
@@ -72,6 +79,11 @@ export class Lox {
     } else {
       Lox.report(token.line, ` at '${token.lexeme}'`, message);
     }
+  }
+
+  static runtimeError(err: RuntimeError) {
+    console.log(`${err.message}\n[line ${err.token.line}]`);
+    Lox.hadRuntimeError = true;
   }
 }
 
