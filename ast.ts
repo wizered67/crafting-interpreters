@@ -5,11 +5,13 @@ export enum Node {
   Grouping = "Grouping",
   Literal = "Literal",
   Unary = "Unary",
+  Variable = "Variable",
   Expression = "Expression",
   Print = "Print",
+  Var = "Var",
 }
 
-export type Expr = Binary | Grouping | Literal | Unary;
+export type Expr = Binary | Grouping | Literal | Unary | Variable;
 
 export type Binary = {
   kind: Node.Binary;
@@ -34,7 +36,12 @@ export type Unary = {
   right: Expr;
 };
 
-export type Statement = ExpressionStatement | PrintStatement;
+export type Variable = {
+  kind: Node.Variable;
+  name: Token;
+}
+
+export type Statement = ExpressionStatement | PrintStatement | VarStatement;
 
 export type ExpressionStatement = {
   kind: Node.Expression;
@@ -44,4 +51,10 @@ export type ExpressionStatement = {
 export type PrintStatement = {
   kind: Node.Print;
   expression: Expr;
+}
+
+export type VarStatement = {
+  kind: Node.Var;
+  name: Token;
+  initializer: Expr | null;
 }

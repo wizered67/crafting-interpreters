@@ -14,10 +14,38 @@ export class Parser {
   parse(): Statement[] {
     const statements = [];
     while (!this.isAtEnd()) {
-      statements.push(this.statement());
+      const statement = this.declaration();
+      if (statement) {
+        statements.push(statement);
+      }
     }
 
     return statements;
+  }
+
+  private declaration(): Statement | null {
+    try {
+      if (this.match(TokenType.VAR)) {
+        return this.varDeclaration();
+      }
+      return this.statement();
+    } catch (err: unknown) {
+      if (err instanceof ParseError) {
+        this.synchronize();
+        return null;
+      }
+      throw err;
+    }
+  }
+
+  private varDeclaration(): Statement {
+    const identifier = this.consume(TokenType.IDENTIFIER, "Expect variable name.");
+      let expression = null;
+      if (this.match(TokenType.EQUAL)) {
+        expression = this.expression();
+      }
+      this.consume(TokenType.SEMICOLON, "Expect ';' after value.");
+      return { kind: Node.Var, name: identifier, initializer: expression };
   }
 
   private statement(): Statement {
@@ -96,6 +124,11 @@ export class Parser {
       const token = this.previous();
       return { kind: Node.Literal, value: token.literal };
     }
+
+    if (this.match(TokenType.IDENTIFIER)) {
+      return { kind: Node.Variable, name: this.previous() };
+    }
+
     if (this.match(TokenType.LEFT_PAREN)) {
       const expr = this.expression();
       this.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.");

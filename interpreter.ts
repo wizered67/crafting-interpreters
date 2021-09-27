@@ -7,12 +7,17 @@ import {
   ExpressionStatement,
   PrintStatement,
   Statement,
+  Variable,
+  VarStatement,
 } from "./ast";
+import { Environment } from "./environment";
 import { RuntimeError } from "./RuntimeError";
 import { Token } from "./token";
 import { TokenType } from "./tokenType";
 
 export class Interpreter {
+  private environment: Environment = new Environment();
+
   interpret(statements: Statement[]): any {
     try {
       for (const statement of statements) {
@@ -37,6 +42,8 @@ export class Interpreter {
         return this.interpretBinary(expr);
       case Node.Grouping:
         return this.evaluate(expr.expression);
+      case Node.Variable:
+        return this.interpretVariable(expr);
       default:
         assertUnreachable(expr);
     }
@@ -48,6 +55,8 @@ export class Interpreter {
         return this.interpretExpressionStatement(statement);
       case Node.Print:
         return this.interpretPrintStatement(statement);
+      case Node.Var:
+        return this.interpretVariableDeclaration(statement);
       default:
         assertUnreachable(statement);
     }
@@ -60,6 +69,11 @@ export class Interpreter {
   private interpretPrintStatement(stmt: PrintStatement): void {
     const value = this.evaluate(stmt.expression);
     console.log(stringify(value));
+  }
+
+  private interpretVariableDeclaration(stmt: VarStatement): void {
+    const value = stmt.initializer ? this.evaluate(stmt.initializer) : null;
+    this.environment.define(stmt.name.lexeme, value);
   }
 
   private interpretUnary(unary: Unary) {
@@ -114,6 +128,10 @@ export class Interpreter {
         checkNumberOperands(binary.operator, left, right);
         return left <= right;
     }
+  }
+
+  private interpretVariable(variable: Variable) {
+    return this.environment.get(variable.name);
   }
 }
 
