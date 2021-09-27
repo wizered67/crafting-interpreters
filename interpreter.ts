@@ -1,14 +1,23 @@
 import { Lox } from ".";
-import { Expr, Node, Unary, Binary } from "./ast";
+import {
+  Expr,
+  Node,
+  Unary,
+  Binary,
+  ExpressionStatement,
+  PrintStatement,
+  Statement,
+} from "./ast";
 import { RuntimeError } from "./RuntimeError";
 import { Token } from "./token";
 import { TokenType } from "./tokenType";
 
 export class Interpreter {
-  interpret(expr: Expr): any {
+  interpret(statements: Statement[]): any {
     try {
-      const value = this.evaluate(expr);
-      console.log(stringify(value));
+      for (const statement of statements) {
+        this.execute(statement);
+      }
     } catch (err) {
       if (err instanceof RuntimeError) {
         Lox.runtimeError(err);
@@ -28,7 +37,29 @@ export class Interpreter {
         return this.interpretBinary(expr);
       case Node.Grouping:
         return this.evaluate(expr.expression);
+      default:
+        assertUnreachable(expr);
     }
+  }
+
+  private execute(statement: Statement): void {
+    switch (statement.kind) {
+      case Node.Expression:
+        return this.interpretExpressionStatement(statement);
+      case Node.Print:
+        return this.interpretPrintStatement(statement);
+      default:
+        assertUnreachable(statement);
+    }
+  }
+
+  private interpretExpressionStatement(stmt: ExpressionStatement): void {
+    this.evaluate(stmt.expression);
+  }
+
+  private interpretPrintStatement(stmt: PrintStatement): void {
+    const value = this.evaluate(stmt.expression);
+    console.log(stringify(value));
   }
 
   private interpretUnary(unary: Unary) {
@@ -107,4 +138,8 @@ function stringify(value: any): string {
     return "nil";
   }
   return `${value}`;
+}
+
+function assertUnreachable(value: never) {
+  throw new Error("Shouldn't have reached this.");
 }

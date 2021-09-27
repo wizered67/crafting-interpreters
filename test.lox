@@ -1,9 +1,3 @@
-// this is a comment
-(( )){} // grouping stuff
-!*+-/=<> <= == // operators
-"hello!
-"world
-"yo wht's up"
-5 10 15.54324
-0.131231
-91234.12342156
+print "one";
+print true;
+print 2 + 1;

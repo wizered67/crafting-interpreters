@@ -1,5 +1,5 @@
 import { Lox } from ".";
-import { Expr, Node } from "./ast";
+import { Expr, Node, Statement } from "./ast";
 import { Token } from "./token";
 import { TokenType } from "./tokenType";
 
@@ -11,19 +11,32 @@ export class Parser {
     this.tokens = tokens;
   }
 
-  parse(): Expr | null {
-    try {
-      const expr = this.expression();
-      if (!this.isAtEnd()) {
-        Lox.error(this.peek(), "Unexpected token");
-      }
-      return expr;
-    } catch (err: unknown) {
-      if (err instanceof ParseError) {
-        return null;
-      }
-      throw err;
+  parse(): Statement[] {
+    const statements = [];
+    while (!this.isAtEnd()) {
+      statements.push(this.statement());
     }
+
+    return statements;
+  }
+
+  private statement(): Statement {
+    if (this.match(TokenType.PRINT)) {
+      return this.printStatement();
+    }
+    return this.expressionStatement();
+  }
+
+  private printStatement(): Statement {
+    const value = this.expression();
+    this.consume(TokenType.SEMICOLON, "Expect ';' after value.");
+    return { kind: Node.Print, expression: value };
+  }
+
+  private expressionStatement(): Statement {
+    const value = this.expression();
+    this.consume(TokenType.SEMICOLON, "Expect ';' after value.");
+    return { kind: Node.Expression, expression: value };
   }
 
   private expression(): Expr {

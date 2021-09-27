@@ -54,11 +54,11 @@ export class Lox {
     const scanner = new Scanner(source);
     const tokens = scanner.scanTokens();
     const parser = new Parser(tokens);
-    const expr = parser.parse();
-    if (this.hadError || !expr) {
+    const statements = parser.parse();
+    if (this.hadError) {
       return;
     }
-    this.interpreter.interpret(expr);
+    this.interpreter.interpret(statements);
   }
 
   private static report(line: number, where: string, message: string) {

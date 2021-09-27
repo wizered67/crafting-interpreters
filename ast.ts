@@ -5,6 +5,8 @@ export enum Node {
   Grouping = "Grouping",
   Literal = "Literal",
   Unary = "Unary",
+  Expression = "Expression",
+  Print = "Print",
 }
 
 export type Expr = Binary | Grouping | Literal | Unary;
@@ -31,3 +33,15 @@ export type Unary = {
   operator: Token;
   right: Expr;
 };
+
+export type Statement = ExpressionStatement | PrintStatement;
+
+export type ExpressionStatement = {
+  kind: Node.Expression;
+  expression: Expr;
+}
+
+export type PrintStatement = {
+  kind: Node.Print;
+  expression: Expr;
+}
