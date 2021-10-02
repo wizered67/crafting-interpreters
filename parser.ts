@@ -55,7 +55,22 @@ export class Parser {
     if (this.match(TokenType.PRINT)) {
       return this.printStatement();
     }
+    if (this.match(TokenType.LEFT_BRACE)) {
+      return { kind: Node.Block, statements: this.block() };
+    }
     return this.expressionStatement();
+  }
+
+  private block(): Statement[] {
+    const statements: Statement[] = [];
+    while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
+      const declaration = this.declaration();
+      if (declaration) {
+        statements.push(declaration);
+      }
+    }
+    this.consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
+    return statements;
   }
 
   private printStatement(): Statement {

@@ -61,8 +61,23 @@ export class Interpreter {
         return this.interpretPrintStatement(statement);
       case Node.Var:
         return this.interpretVariableDeclaration(statement);
+      case Node.Block:
+        return this.executeBlock(
+          statement.statements,
+          new Environment(this.environment),
+        );
       default:
         assertUnreachable(statement);
+    }
+  }
+
+  private executeBlock(statements: Statement[], environment: Environment) {
+    const previousEnvironment = this.environment;
+    try {
+      this.environment = environment;
+      statements.forEach((stmt) => this.execute(stmt));
+    } finally {
+      this.environment = previousEnvironment;
     }
   }
 
