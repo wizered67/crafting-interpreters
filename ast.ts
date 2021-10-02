@@ -9,9 +9,10 @@ export enum Node {
   Expression = "Expression",
   Print = "Print",
   Var = "Var",
+  Assignment = "Assignment",
 }
 
-export type Expr = Binary | Grouping | Literal | Unary | Variable;
+export type Expr = Binary | Grouping | Literal | Unary | Variable | Assignment;
 
 export type Binary = {
   kind: Node.Binary;
@@ -39,6 +40,12 @@ export type Unary = {
 export type Variable = {
   kind: Node.Variable;
   name: Token;
+}
+
+export type Assignment = {
+  kind: Node.Assignment;
+  name: Token;
+  value: Expr;
 }
 
 export type Statement = ExpressionStatement | PrintStatement | VarStatement;

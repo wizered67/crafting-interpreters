@@ -39,13 +39,16 @@ export class Parser {
   }
 
   private varDeclaration(): Statement {
-    const identifier = this.consume(TokenType.IDENTIFIER, "Expect variable name.");
-      let expression = null;
-      if (this.match(TokenType.EQUAL)) {
-        expression = this.expression();
-      }
-      this.consume(TokenType.SEMICOLON, "Expect ';' after value.");
-      return { kind: Node.Var, name: identifier, initializer: expression };
+    const identifier = this.consume(
+      TokenType.IDENTIFIER,
+      "Expect variable name.",
+    );
+    let expression = null;
+    if (this.match(TokenType.EQUAL)) {
+      expression = this.expression();
+    }
+    this.consume(TokenType.SEMICOLON, "Expect ';' after value.");
+    return { kind: Node.Var, name: identifier, initializer: expression };
   }
 
   private statement(): Statement {
@@ -68,37 +71,57 @@ export class Parser {
   }
 
   private expression(): Expr {
-    return this.equality();
+    return this.assignment();
+  }
+
+  private assignment(): Expr {
+    const expr = this.equality();
+
+    if (this.match(TokenType.EQUAL)) {
+      const equals = this.previous();
+      const value = this.assignment();
+
+      if (expr.kind === Node.Variable) {
+        const name = expr.name;
+        return { kind: Node.Assignment, name, value };
+      }
+      this.error(equals, "Invalid assignment target.");
+    }
+
+    return expr;
   }
 
   private equality(): Expr {
-    return this.parseLeftAssociativeBinary(() => this.comparison(), [
-      TokenType.EQUAL_EQUAL,
-      TokenType.BANG_EQUAL,
-    ]);
+    return this.parseLeftAssociativeBinary(
+      () => this.comparison(),
+      [TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL],
+    );
   }
 
   private comparison(): Expr {
-    return this.parseLeftAssociativeBinary(() => this.term(), [
-      TokenType.GREATER,
-      TokenType.GREATER_EQUAL,
-      TokenType.LESS,
-      TokenType.LESS_EQUAL,
-    ]);
+    return this.parseLeftAssociativeBinary(
+      () => this.term(),
+      [
+        TokenType.GREATER,
+        TokenType.GREATER_EQUAL,
+        TokenType.LESS,
+        TokenType.LESS_EQUAL,
+      ],
+    );
   }
 
   private term(): Expr {
-    return this.parseLeftAssociativeBinary(() => this.factor(), [
-      TokenType.PLUS,
-      TokenType.MINUS,
-    ]);
+    return this.parseLeftAssociativeBinary(
+      () => this.factor(),
+      [TokenType.PLUS, TokenType.MINUS],
+    );
   }
 
   private factor(): Expr {
-    return this.parseLeftAssociativeBinary(() => this.unary(), [
-      TokenType.STAR,
-      TokenType.SLASH,
-    ]);
+    return this.parseLeftAssociativeBinary(
+      () => this.unary(),
+      [TokenType.STAR, TokenType.SLASH],
+    );
   }
 
   private unary(): Expr {

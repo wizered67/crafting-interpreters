@@ -44,6 +44,10 @@ export class Interpreter {
         return this.evaluate(expr.expression);
       case Node.Variable:
         return this.interpretVariable(expr);
+      case Node.Assignment:
+        const value = this.evaluate(expr.value);
+        this.environment.assign(expr.name, value);
+        return value;
       default:
         assertUnreachable(expr);
     }
