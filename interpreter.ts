@@ -168,7 +168,7 @@ function checkNumberOperands(
 }
 
 function isTruthy(value: LoxValue) {
-  return value === null || value === false;
+  return value !== null && value !== false;
 }
 
 function stringify(value: LoxValue): string {
