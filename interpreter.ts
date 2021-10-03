@@ -111,9 +111,17 @@ export class Interpreter {
   }
 
   private interpretBinary(binary: exprs.Binary): LoxValue {
+    if (isLogicalBinary(binary)) {
+      return this.interpretLogicalBinary(binary);
+    }
     let left = this.evaluate(binary.left);
     let right = this.evaluate(binary.right);
-    switch (binary.operator.type) {
+    switch (
+      binary.operator.type as Exclude<
+        exprs.BinaryOperators,
+        TokenType.OR | TokenType.AND
+      >
+    ) {
       case TokenType.PLUS:
         if (typeof left === "number" && typeof right === "number") {
           return left + right;
@@ -153,6 +161,25 @@ export class Interpreter {
     }
   }
 
+  private interpretLogicalBinary(
+    expr: exprs.Binary<TokenType.AND | TokenType.OR>,
+  ): LoxValue {
+    const left = this.evaluate(expr.left);
+
+    switch (expr.operator.type) {
+      case TokenType.OR:
+        if (isTruthy(left)) {
+          return left;
+        }
+      case TokenType.AND:
+        if (!isTruthy(left)) {
+          return left;
+        }
+    }
+
+    return this.evaluate(expr.right);
+  }
+
   private interpretVariable(variable: exprs.Variable) {
     return this.environment.get(variable.name);
   }
@@ -190,4 +217,13 @@ function stringify(value: LoxValue): string {
 
 function assertUnreachable(value: never): never {
   throw new Error("Shouldn't have reached this.");
+}
+
+function isLogicalBinary(
+  binary: exprs.Binary,
+): binary is exprs.Binary<TokenType.OR | TokenType.AND> {
+  return (
+    binary.operator.type === TokenType.AND ||
+    binary.operator.type === TokenType.OR
+  );
 }

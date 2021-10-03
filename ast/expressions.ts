@@ -23,12 +23,14 @@ export type BinaryOperators =
   | TokenType.GREATER
   | TokenType.GREATER_EQUAL
   | TokenType.EQUAL_EQUAL
-  | TokenType.BANG_EQUAL;
+  | TokenType.BANG_EQUAL
+  | TokenType.OR
+  | TokenType.AND;
 
-export type Binary = {
+export type Binary<T extends BinaryOperators = BinaryOperators> = {
   kind: Node.Binary;
   left: Expr;
-  operator: Token<BinaryOperators>;
+  operator: Token<T>;
   right: Expr;
 };
 

@@ -106,7 +106,7 @@ export class Parser {
   }
 
   private assignment(): exprs.Expr {
-    const expr = this.equality();
+    const expr = this.logicOr();
 
     if (this.match(TokenType.EQUAL)) {
       const equals = this.previous();
@@ -120,6 +120,20 @@ export class Parser {
     }
 
     return expr;
+  }
+
+  private logicOr(): exprs.Expr {
+    return this.parseLeftAssociativeBinary(
+      () => this.logicAnd(),
+      [TokenType.OR],
+    );
+  }
+
+  private logicAnd(): exprs.Expr {
+    return this.parseLeftAssociativeBinary(
+      () => this.equality(),
+      [TokenType.AND],
+    );
   }
 
   private equality(): exprs.Expr {
