@@ -59,6 +59,9 @@ export class Parser {
     if (this.match(TokenType.LEFT_BRACE)) {
       return { kind: stmts.Node.Block, statements: this.block() };
     }
+    if (this.match(TokenType.IF)) {
+      return this.ifStatement();
+    }
     return this.expressionStatement();
   }
 
@@ -84,6 +87,18 @@ export class Parser {
     const value = this.expression();
     this.consume(TokenType.SEMICOLON, "Expect ';' after value.");
     return { kind: stmts.Node.Expression, expression: value };
+  }
+
+  private ifStatement(): stmts.Statement {
+    this.consume(TokenType.LEFT_PAREN, "Expect '(' after if.");
+    const condition = this.expression();
+    this.consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.");
+    const body = this.statement();
+    let elseBody;
+    if (this.match(TokenType.ELSE)) {
+      elseBody = this.statement();
+    }
+    return { kind: stmts.Node.If, condition, body, elseBody };
   }
 
   private expression(): exprs.Expr {

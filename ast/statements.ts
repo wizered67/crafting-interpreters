@@ -6,13 +6,15 @@ export enum Node {
   Print = "Print",
   Var = "Var",
   Block = "Block",
+  If = "If",
 }
 
 export type Statement =
   | ExpressionStatement
   | PrintStatement
   | VarStatement
-  | BlockStatement;
+  | BlockStatement
+  | IfStatement;
 
 export type ExpressionStatement = {
   kind: Node.Expression;
@@ -33,4 +35,11 @@ export type VarStatement = {
 export type BlockStatement = {
   kind: Node.Block;
   statements: Statement[];
+};
+
+export type IfStatement = {
+  kind: Node.If;
+  condition: Expr;
+  body: Statement;
+  elseBody?: Statement;
 };

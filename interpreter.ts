@@ -57,6 +57,8 @@ export class Interpreter {
           statement.statements,
           new Environment(this.environment),
         );
+      case stmts.Node.If:
+        return this.interpretIf(statement);
       default:
         assertUnreachable(statement);
     }
@@ -87,6 +89,14 @@ export class Interpreter {
   private interpretVariableDeclaration(stmt: stmts.VarStatement): void {
     const value = stmt.initializer ? this.evaluate(stmt.initializer) : null;
     this.environment.define(stmt.name.lexeme, value);
+  }
+
+  private interpretIf(stmt: stmts.IfStatement): void {
+    if (isTruthy(this.evaluate(stmt.condition))) {
+      this.execute(stmt.body);
+    } else if (stmt.elseBody) {
+      this.execute(stmt.elseBody);
+    }
   }
 
   private interpretUnary(unary: exprs.Unary): LoxValue {
