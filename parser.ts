@@ -1,5 +1,5 @@
 import { Lox } from ".";
-import { Expr, Node, Statement } from "./ast";
+import { exprs, stmts } from "./ast";
 import { Token } from "./token";
 import { TokenType } from "./tokenType";
 
@@ -11,7 +11,7 @@ export class Parser {
     this.tokens = tokens;
   }
 
-  parse(): Statement[] {
+  parse(): stmts.Statement[] {
     const statements = [];
     while (!this.isAtEnd()) {
       const statement = this.declaration();
@@ -23,7 +23,7 @@ export class Parser {
     return statements;
   }
 
-  private declaration(): Statement | null {
+  private declaration(): stmts.Statement | null {
     try {
       if (this.match(TokenType.VAR)) {
         return this.varDeclaration();
@@ -38,7 +38,7 @@ export class Parser {
     }
   }
 
-  private varDeclaration(): Statement {
+  private varDeclaration(): stmts.Statement {
     const identifier = this.consume(
       TokenType.IDENTIFIER,
       "Expect variable name.",
@@ -48,21 +48,21 @@ export class Parser {
       expression = this.expression();
     }
     this.consume(TokenType.SEMICOLON, "Expect ';' after value.");
-    return { kind: Node.Var, name: identifier, initializer: expression };
+    return { kind: stmts.Node.Var, name: identifier, initializer: expression };
   }
 
-  private statement(): Statement {
+  private statement(): stmts.Statement {
     if (this.match(TokenType.PRINT)) {
       return this.printStatement();
     }
     if (this.match(TokenType.LEFT_BRACE)) {
-      return { kind: Node.Block, statements: this.block() };
+      return { kind: stmts.Node.Block, statements: this.block() };
     }
     return this.expressionStatement();
   }
 
-  private block(): Statement[] {
-    const statements: Statement[] = [];
+  private block(): stmts.Statement[] {
+    const statements: stmts.Statement[] = [];
     while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
       const declaration = this.declaration();
       if (declaration) {
@@ -73,32 +73,32 @@ export class Parser {
     return statements;
   }
 
-  private printStatement(): Statement {
+  private printStatement(): stmts.Statement {
     const value = this.expression();
     this.consume(TokenType.SEMICOLON, "Expect ';' after value.");
-    return { kind: Node.Print, expression: value };
+    return { kind: stmts.Node.Print, expression: value };
   }
 
-  private expressionStatement(): Statement {
+  private expressionStatement(): stmts.Statement {
     const value = this.expression();
     this.consume(TokenType.SEMICOLON, "Expect ';' after value.");
-    return { kind: Node.Expression, expression: value };
+    return { kind: stmts.Node.Expression, expression: value };
   }
 
-  private expression(): Expr {
+  private expression(): exprs.Expr {
     return this.assignment();
   }
 
-  private assignment(): Expr {
+  private assignment(): exprs.Expr {
     const expr = this.equality();
 
     if (this.match(TokenType.EQUAL)) {
       const equals = this.previous();
       const value = this.assignment();
 
-      if (expr.kind === Node.Variable) {
+      if (expr.kind === exprs.Node.Variable) {
         const name = expr.name;
-        return { kind: Node.Assignment, name, value };
+        return { kind: exprs.Node.Assignment, name, value };
       }
       this.error(equals, "Invalid assignment target.");
     }
@@ -106,14 +106,14 @@ export class Parser {
     return expr;
   }
 
-  private equality(): Expr {
+  private equality(): exprs.Expr {
     return this.parseLeftAssociativeBinary(
       () => this.comparison(),
       [TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL],
     );
   }
 
-  private comparison(): Expr {
+  private comparison(): exprs.Expr {
     return this.parseLeftAssociativeBinary(
       () => this.term(),
       [
@@ -125,67 +125,67 @@ export class Parser {
     );
   }
 
-  private term(): Expr {
+  private term(): exprs.Expr {
     return this.parseLeftAssociativeBinary(
       () => this.factor(),
       [TokenType.PLUS, TokenType.MINUS],
     );
   }
 
-  private factor(): Expr {
+  private factor(): exprs.Expr {
     return this.parseLeftAssociativeBinary(
       () => this.unary(),
       [TokenType.STAR, TokenType.SLASH],
     );
   }
 
-  private unary(): Expr {
+  private unary(): exprs.Expr {
     if (this.match(TokenType.BANG, TokenType.MINUS)) {
       const operator = this.previous();
       const right = this.unary();
-      return { kind: Node.Unary, operator, right };
+      return { kind: exprs.Node.Unary, operator, right };
     }
     return this.primary();
   }
 
-  private primary(): Expr {
+  private primary(): exprs.Expr {
     if (this.match(TokenType.TRUE)) {
-      return { kind: Node.Literal, value: true };
+      return { kind: exprs.Node.Literal, value: true };
     }
     if (this.match(TokenType.FALSE)) {
-      return { kind: Node.Literal, value: false };
+      return { kind: exprs.Node.Literal, value: false };
     }
     if (this.match(TokenType.NIL)) {
-      return { kind: Node.Literal, value: null };
+      return { kind: exprs.Node.Literal, value: null };
     }
     if (this.match(TokenType.NUMBER, TokenType.STRING)) {
       const token = this.previous();
-      return { kind: Node.Literal, value: token.literal };
+      return { kind: exprs.Node.Literal, value: token.literal };
     }
 
     if (this.match(TokenType.IDENTIFIER)) {
-      return { kind: Node.Variable, name: this.previous() };
+      return { kind: exprs.Node.Variable, name: this.previous() };
     }
 
     if (this.match(TokenType.LEFT_PAREN)) {
       const expr = this.expression();
       this.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.");
-      return { kind: Node.Grouping, expression: expr };
+      return { kind: exprs.Node.Grouping, expression: expr };
     }
 
     throw this.error(this.peek(), "Expect expression.");
   }
 
   private parseLeftAssociativeBinary(
-    operandFn: () => Expr,
+    operandFn: () => exprs.Expr,
     validOperators: TokenType[],
-  ): Expr {
+  ): exprs.Expr {
     let expr = operandFn();
 
     while (this.match(...validOperators)) {
       const operator = this.previous();
       const right = operandFn();
-      expr = { kind: Node.Binary, left: expr, operator, right };
+      expr = { kind: exprs.Node.Binary, left: expr, operator, right };
     }
 
     return expr;

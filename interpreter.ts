@@ -1,15 +1,5 @@
 import { Lox } from ".";
-import {
-  Expr,
-  Node,
-  Unary,
-  Binary,
-  ExpressionStatement,
-  PrintStatement,
-  Statement,
-  Variable,
-  VarStatement,
-} from "./ast";
+import { exprs, stmts } from "./ast";
 import { Environment } from "./environment";
 import { RuntimeError } from "./RuntimeError";
 import { Token } from "./token";
@@ -18,7 +8,7 @@ import { TokenType } from "./tokenType";
 export class Interpreter {
   private environment: Environment = new Environment();
 
-  interpret(statements: Statement[]): any {
+  interpret(statements: stmts.Statement[]): any {
     try {
       for (const statement of statements) {
         this.execute(statement);
@@ -32,19 +22,19 @@ export class Interpreter {
     }
   }
 
-  private evaluate(expr: Expr): any {
+  private evaluate(expr: exprs.Expr): any {
     switch (expr.kind) {
-      case Node.Literal:
+      case exprs.Node.Literal:
         return expr.value;
-      case Node.Unary:
+      case exprs.Node.Unary:
         return this.interpretUnary(expr);
-      case Node.Binary:
+      case exprs.Node.Binary:
         return this.interpretBinary(expr);
-      case Node.Grouping:
+      case exprs.Node.Grouping:
         return this.evaluate(expr.expression);
-      case Node.Variable:
+      case exprs.Node.Variable:
         return this.interpretVariable(expr);
-      case Node.Assignment:
+      case exprs.Node.Assignment:
         const value = this.evaluate(expr.value);
         this.environment.assign(expr.name, value);
         return value;
@@ -53,15 +43,15 @@ export class Interpreter {
     }
   }
 
-  private execute(statement: Statement): void {
+  private execute(statement: stmts.Statement): void {
     switch (statement.kind) {
-      case Node.Expression:
+      case stmts.Node.Expression:
         return this.interpretExpressionStatement(statement);
-      case Node.Print:
+      case stmts.Node.Print:
         return this.interpretPrintStatement(statement);
-      case Node.Var:
+      case stmts.Node.Var:
         return this.interpretVariableDeclaration(statement);
-      case Node.Block:
+      case stmts.Node.Block:
         return this.executeBlock(
           statement.statements,
           new Environment(this.environment),
@@ -71,7 +61,10 @@ export class Interpreter {
     }
   }
 
-  private executeBlock(statements: Statement[], environment: Environment) {
+  private executeBlock(
+    statements: stmts.Statement[],
+    environment: Environment,
+  ) {
     const previousEnvironment = this.environment;
     try {
       this.environment = environment;
@@ -81,21 +74,21 @@ export class Interpreter {
     }
   }
 
-  private interpretExpressionStatement(stmt: ExpressionStatement): void {
+  private interpretExpressionStatement(stmt: stmts.ExpressionStatement): void {
     this.evaluate(stmt.expression);
   }
 
-  private interpretPrintStatement(stmt: PrintStatement): void {
+  private interpretPrintStatement(stmt: stmts.PrintStatement): void {
     const value = this.evaluate(stmt.expression);
     console.log(stringify(value));
   }
 
-  private interpretVariableDeclaration(stmt: VarStatement): void {
+  private interpretVariableDeclaration(stmt: stmts.VarStatement): void {
     const value = stmt.initializer ? this.evaluate(stmt.initializer) : null;
     this.environment.define(stmt.name.lexeme, value);
   }
 
-  private interpretUnary(unary: Unary) {
+  private interpretUnary(unary: exprs.Unary) {
     const right = this.evaluate(unary.right);
     switch (unary.operator.type) {
       case TokenType.BANG:
@@ -106,7 +99,7 @@ export class Interpreter {
     }
   }
 
-  private interpretBinary(binary: Binary) {
+  private interpretBinary(binary: exprs.Binary) {
     const left = this.evaluate(binary.left);
     const right = this.evaluate(binary.right);
     switch (binary.operator.type) {
@@ -149,7 +142,7 @@ export class Interpreter {
     }
   }
 
-  private interpretVariable(variable: Variable) {
+  private interpretVariable(variable: exprs.Variable) {
     return this.environment.get(variable.name);
   }
 }
