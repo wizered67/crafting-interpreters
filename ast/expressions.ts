@@ -1,4 +1,6 @@
 import { Token } from "../token";
+import { TokenType } from "../tokenType";
+import { LoxValue } from "./value";
 
 export enum Node {
   Binary = "Binary",
@@ -11,10 +13,22 @@ export enum Node {
 
 export type Expr = Binary | Grouping | Literal | Unary | Variable | Assignment;
 
+export type BinaryOperators =
+  | TokenType.PLUS
+  | TokenType.MINUS
+  | TokenType.SLASH
+  | TokenType.STAR
+  | TokenType.LESS
+  | TokenType.LESS_EQUAL
+  | TokenType.GREATER
+  | TokenType.GREATER_EQUAL
+  | TokenType.EQUAL_EQUAL
+  | TokenType.BANG_EQUAL;
+
 export type Binary = {
   kind: Node.Binary;
   left: Expr;
-  operator: Token;
+  operator: Token<BinaryOperators>;
   right: Expr;
 };
 
@@ -25,12 +39,14 @@ export type Grouping = {
 
 export type Literal = {
   kind: Node.Literal;
-  value: any;
+  value: LoxValue;
 };
+
+export type UnaryOperators = TokenType.BANG | TokenType.MINUS;
 
 export type Unary = {
   kind: Node.Unary;
-  operator: Token;
+  operator: Token<UnaryOperators>;
   right: Expr;
 };
 

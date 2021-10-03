@@ -1,5 +1,6 @@
 import { Lox } from ".";
 import { exprs, stmts } from "./ast";
+import { BinaryOperators } from "./ast/expressions";
 import { Token } from "./token";
 import { TokenType } from "./tokenType";
 
@@ -140,8 +141,9 @@ export class Parser {
   }
 
   private unary(): exprs.Expr {
-    if (this.match(TokenType.BANG, TokenType.MINUS)) {
-      const operator = this.previous();
+    const unaryOperators = [TokenType.BANG, TokenType.MINUS] as const;
+    if (this.match(...unaryOperators)) {
+      const operator = this.previous() as Token<typeof unaryOperators[number]>;
       const right = this.unary();
       return { kind: exprs.Node.Unary, operator, right };
     }
@@ -176,14 +178,14 @@ export class Parser {
     throw this.error(this.peek(), "Expect expression.");
   }
 
-  private parseLeftAssociativeBinary(
+  private parseLeftAssociativeBinary<T extends BinaryOperators>(
     operandFn: () => exprs.Expr,
-    validOperators: TokenType[],
+    validOperators: T[],
   ): exprs.Expr {
     let expr = operandFn();
 
     while (this.match(...validOperators)) {
-      const operator = this.previous();
+      const operator = this.previous() as Token<T>;
       const right = operandFn();
       expr = { kind: exprs.Node.Binary, left: expr, operator, right };
     }

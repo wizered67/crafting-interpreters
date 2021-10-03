@@ -1,5 +1,6 @@
 import { Lox } from ".";
 import { exprs, stmts } from "./ast";
+import { LoxValue } from "./ast/value";
 import { Environment } from "./environment";
 import { RuntimeError } from "./RuntimeError";
 import { Token } from "./token";
@@ -8,7 +9,7 @@ import { TokenType } from "./tokenType";
 export class Interpreter {
   private environment: Environment = new Environment();
 
-  interpret(statements: stmts.Statement[]): any {
+  interpret(statements: stmts.Statement[]): LoxValue | undefined {
     try {
       for (const statement of statements) {
         this.execute(statement);
@@ -22,7 +23,7 @@ export class Interpreter {
     }
   }
 
-  private evaluate(expr: exprs.Expr): any {
+  private evaluate(expr: exprs.Expr): LoxValue {
     switch (expr.kind) {
       case exprs.Node.Literal:
         return expr.value;
@@ -88,7 +89,7 @@ export class Interpreter {
     this.environment.define(stmt.name.lexeme, value);
   }
 
-  private interpretUnary(unary: exprs.Unary) {
+  private interpretUnary(unary: exprs.Unary): LoxValue {
     const right = this.evaluate(unary.right);
     switch (unary.operator.type) {
       case TokenType.BANG:
@@ -99,45 +100,45 @@ export class Interpreter {
     }
   }
 
-  private interpretBinary(binary: exprs.Binary) {
-    const left = this.evaluate(binary.left);
-    const right = this.evaluate(binary.right);
+  private interpretBinary(binary: exprs.Binary): LoxValue {
+    let left = this.evaluate(binary.left);
+    let right = this.evaluate(binary.right);
     switch (binary.operator.type) {
       case TokenType.PLUS:
-        if (
-          (typeof left === "number" && typeof right === "number") ||
-          (typeof left === "string" && typeof right === "string")
-        ) {
-          return (left as any) + right;
+        if (typeof left === "number" && typeof right === "number") {
+          return left + right;
+        }
+        if (typeof left === "string" && typeof right === "string") {
+          return left + right;
         }
         throw new RuntimeError(
           binary.operator,
           "Operands must be two numbers or two strings.",
         );
       case TokenType.MINUS:
-        checkNumberOperands(binary.operator, left, right);
+        [left, right] = checkNumberOperands(binary.operator, left, right);
         return left - right;
       case TokenType.STAR:
-        checkNumberOperands(binary.operator, left, right);
+        [left, right] = checkNumberOperands(binary.operator, left, right);
         return left * right;
       case TokenType.SLASH:
-        checkNumberOperands(binary.operator, left, right);
+        [left, right] = checkNumberOperands(binary.operator, left, right);
         return left / right;
       case TokenType.EQUAL_EQUAL:
         return left === right;
       case TokenType.BANG_EQUAL:
         return left !== right;
       case TokenType.GREATER:
-        checkNumberOperands(binary.operator, left, right);
+        [left, right] = checkNumberOperands(binary.operator, left, right);
         return left > right;
       case TokenType.GREATER_EQUAL:
-        checkNumberOperands(binary.operator, left, right);
+        [left, right] = checkNumberOperands(binary.operator, left, right);
         return left >= right;
       case TokenType.LESS:
-        checkNumberOperands(binary.operator, left, right);
+        [left, right] = checkNumberOperands(binary.operator, left, right);
         return left < right;
       case TokenType.LESS_EQUAL:
-        checkNumberOperands(binary.operator, left, right);
+        [left, right] = checkNumberOperands(binary.operator, left, right);
         return left <= right;
     }
   }
@@ -147,29 +148,36 @@ export class Interpreter {
   }
 }
 
-function checkNumberOperand(operator: Token, operand: any) {
+function checkNumberOperand(
+  operator: Token,
+  operand: LoxValue,
+): asserts operand is number {
   if (typeof operand === "number") return;
   throw new RuntimeError(operator, "Operand must be a number.");
 }
 
-function checkNumberOperands(operator: Token, left: any, right: any) {
+function checkNumberOperands(
+  operator: Token,
+  left: LoxValue,
+  right: LoxValue,
+): [number, number] {
   if (typeof left === "number" && typeof right === "number") {
-    return;
+    return [left, right];
   }
   throw new RuntimeError(operator, "Operands must be numbers.");
 }
 
-function isTruthy(value: any) {
+function isTruthy(value: LoxValue) {
   return value === null || value === false;
 }
 
-function stringify(value: any): string {
+function stringify(value: LoxValue): string {
   if (value === null) {
     return "nil";
   }
   return `${value}`;
 }
 
-function assertUnreachable(value: never) {
+function assertUnreachable(value: never): never {
   throw new Error("Shouldn't have reached this.");
 }

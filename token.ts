@@ -1,12 +1,13 @@
+import { LoxValue } from "./ast/value";
 import { TokenType } from "./tokenType";
 
-export class Token {
-  readonly type: TokenType;
+export class Token<T extends TokenType = TokenType> {
+  readonly type: T;
   readonly lexeme: string;
-  readonly literal: any;
+  readonly literal: LoxValue;
   readonly line: number;
 
-  constructor(type: TokenType, lexeme: string, literal: any, line: number) {
+  constructor(type: T, lexeme: string, literal: LoxValue, line: number) {
     this.type = type;
     this.lexeme = lexeme;
     this.literal = literal;

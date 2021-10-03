@@ -1,19 +1,20 @@
+import { LoxValue } from "./ast/value";
 import { RuntimeError } from "./RuntimeError";
 import { Token } from "./token";
 
 export class Environment {
   private readonly enclosing?: Environment;
-  private readonly values: Map<string, any> = new Map();
+  private readonly values: Map<string, LoxValue> = new Map();
 
   constructor(enclosing?: Environment) {
     this.enclosing = enclosing;
   }
 
-  define(name: string, value: any) {
+  define(name: string, value: LoxValue) {
     this.values.set(name, value);
   }
 
-  assign(name: Token, value: any) {
+  assign(name: Token, value: LoxValue) {
     if (this.values.has(name.lexeme)) {
       this.values.set(name.lexeme, value);
       return;
@@ -26,9 +27,9 @@ export class Environment {
     throw new RuntimeError(name, `Undefined varible ${name.lexeme}.`);
   }
 
-  get(nameToken: Token): any {
+  get(nameToken: Token): LoxValue {
     if (this.values.has(nameToken.lexeme)) {
-      return this.values.get(nameToken.lexeme);
+      return this.values.get(nameToken.lexeme)!;
     }
     if (this.enclosing) {
       return this.enclosing.get(nameToken);

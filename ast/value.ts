@@ -1,0 +1,1 @@
+export type LoxValue = string | number | boolean | null;
