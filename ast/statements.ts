@@ -7,6 +7,7 @@ export enum Node {
   Var = "Var",
   Block = "Block",
   If = "If",
+  While = "While",
 }
 
 export type Statement =
@@ -14,7 +15,8 @@ export type Statement =
   | PrintStatement
   | VarStatement
   | BlockStatement
-  | IfStatement;
+  | IfStatement
+  | WhileStatement;
 
 export type ExpressionStatement = {
   kind: Node.Expression;
@@ -42,4 +44,10 @@ export type IfStatement = {
   condition: Expr;
   body: Statement;
   elseBody?: Statement;
+};
+
+export type WhileStatement = {
+  kind: Node.While;
+  condition: Expr;
+  body: Statement;
 };

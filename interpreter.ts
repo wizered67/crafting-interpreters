@@ -59,6 +59,8 @@ export class Interpreter {
         );
       case stmts.Node.If:
         return this.interpretIf(statement);
+      case stmts.Node.While:
+        return this.interpretWhile(statement);
       default:
         assertUnreachable(statement);
     }
@@ -96,6 +98,12 @@ export class Interpreter {
       this.execute(stmt.body);
     } else if (stmt.elseBody) {
       this.execute(stmt.elseBody);
+    }
+  }
+
+  private interpretWhile(stmt: stmts.WhileStatement): void {
+    while (isTruthy(this.evaluate(stmt.condition))) {
+      this.execute(stmt.body);
     }
   }
 

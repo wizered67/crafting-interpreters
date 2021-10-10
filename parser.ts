@@ -62,6 +62,9 @@ export class Parser {
     if (this.match(TokenType.IF)) {
       return this.ifStatement();
     }
+    if (this.match(TokenType.WHILE)) {
+      return this.whileStatement();
+    }
     return this.expressionStatement();
   }
 
@@ -99,6 +102,14 @@ export class Parser {
       elseBody = this.statement();
     }
     return { kind: stmts.Node.If, condition, body, elseBody };
+  }
+
+  private whileStatement(): stmts.Statement {
+    this.consume(TokenType.LEFT_PAREN, "Expect '(' after while.");
+    const condition = this.expression();
+    this.consume(TokenType.RIGHT_PAREN, "Expect ')' after while condition.");
+    const body = this.statement();
+    return { kind: stmts.Node.While, condition, body };
   }
 
   private expression(): exprs.Expr {
