@@ -1,13 +1,21 @@
 import { Lox } from ".";
 import { exprs, stmts } from "./ast";
-import { LoxValue } from "./ast/value";
+import { LoxCallable, LoxValue } from "./ast/value";
 import { Environment } from "./environment";
 import { RuntimeError } from "./RuntimeError";
 import { Token } from "./token";
 import { TokenType } from "./tokenType";
 
 export class Interpreter {
-  private environment: Environment = new Environment();
+  private readonly globals = new Environment();
+  private environment = this.globals;
+
+  constructor() {
+    this.globals.define(
+      "clock",
+      new LoxCallable(() => Date.now(), 0, "<native fn>"),
+    );
+  }
 
   interpret(statements: stmts.Statement[]): LoxValue | undefined {
     try {
@@ -39,6 +47,8 @@ export class Interpreter {
         const value = this.evaluate(expr.value);
         this.environment.assign(expr.name, value);
         return value;
+      case exprs.Node.Call:
+        return this.interpretCall(expr);
       default:
         assertUnreachable(expr);
     }
@@ -190,6 +200,24 @@ export class Interpreter {
 
   private interpretVariable(variable: exprs.Variable) {
     return this.environment.get(variable.name);
+  }
+
+  private interpretCall(call: exprs.Call) {
+    const callee = this.evaluate(call.callee);
+    const args = call.args.map((arg) => this.evaluate(arg));
+    if (!(callee instanceof LoxCallable)) {
+      throw new RuntimeError(
+        call.paren,
+        "Can only call functions and classes.",
+      );
+    }
+    if (args.length !== callee.arity) {
+      throw new RuntimeError(
+        call.paren,
+        `Expected ${callee.arity} arguments but got ${arguments.length}.`,
+      );
+    }
+    return callee.call(this, args);
   }
 }
 

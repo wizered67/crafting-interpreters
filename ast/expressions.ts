@@ -9,9 +9,17 @@ export enum Node {
   Unary = "Unary",
   Variable = "Variable",
   Assignment = "Assignment",
+  Call = "Call",
 }
 
-export type Expr = Binary | Grouping | Literal | Unary | Variable | Assignment;
+export type Expr =
+  | Binary
+  | Grouping
+  | Literal
+  | Unary
+  | Variable
+  | Assignment
+  | Call;
 
 export type BinaryOperators =
   | TokenType.PLUS
@@ -61,4 +69,11 @@ export type Assignment = {
   kind: Node.Assignment;
   name: Token;
   value: Expr;
+};
+
+export type Call = {
+  kind: Node.Call;
+  callee: Expr;
+  paren: Token;
+  args: Expr[];
 };
