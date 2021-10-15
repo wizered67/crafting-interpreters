@@ -9,6 +9,7 @@ export enum Node {
   Block = "Block",
   If = "If",
   While = "While",
+  Return = "Return",
 }
 
 export type Statement =
@@ -18,7 +19,8 @@ export type Statement =
   | BlockStatement
   | IfStatement
   | WhileStatement
-  | FunctionStatement;
+  | FunctionStatement
+  | ReturnStatement;
 
 export type ExpressionStatement = {
   kind: Node.Expression;
@@ -59,4 +61,10 @@ export type WhileStatement = {
   kind: Node.While;
   condition: Expr;
   body: Statement;
+};
+
+export type ReturnStatement = {
+  kind: Node.Return;
+  keyword: Token;
+  value?: Expr;
 };

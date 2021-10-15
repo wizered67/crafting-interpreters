@@ -2,7 +2,7 @@ import { Lox } from ".";
 import { exprs, stmts } from "./ast";
 import { LoxCallable, LoxValue } from "./ast/value";
 import { Environment } from "./environment";
-import { LoxFunction } from "./LoxFunction";
+import { LoxFunction, Return } from "./LoxFunction";
 import { RuntimeError } from "./RuntimeError";
 import { Token } from "./token";
 import { TokenType } from "./tokenType";
@@ -78,6 +78,8 @@ export class Interpreter {
         return this.interpretWhile(statement);
       case stmts.Node.Function:
         return this.interpretFunctionDeclaration(statement);
+      case stmts.Node.Return:
+        return this.interpretReturn(statement);
       default:
         assertUnreachable(statement);
     }
@@ -124,6 +126,11 @@ export class Interpreter {
     while (isTruthy(this.evaluate(stmt.condition))) {
       this.execute(stmt.body);
     }
+  }
+
+  private interpretReturn(stmt: stmts.ReturnStatement): void {
+    const returnValue = stmt.value ? this.evaluate(stmt.value) : null;
+    throw new Return(returnValue);
   }
 
   private interpretUnary(unary: exprs.Unary): LoxValue {

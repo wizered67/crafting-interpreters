@@ -95,6 +95,9 @@ export class Parser {
     if (this.match(TokenType.FOR)) {
       return this.forStatement();
     }
+    if (this.match(TokenType.RETURN)) {
+      return this.returnStatement();
+    }
     return this.expressionStatement();
   }
 
@@ -186,6 +189,17 @@ export class Parser {
       body: { kind: stmts.Node.Block, statements: bodyBlockStatements },
     });
     return { kind: stmts.Node.Block, statements: blockStatements };
+  }
+
+  private returnStatement(): stmts.Statement {
+    const keyword = this.previous();
+    let value;
+    if (!this.check(TokenType.SEMICOLON)) {
+      value = this.expression();
+    }
+
+    this.consume(TokenType.SEMICOLON, "Expect ';' after return value.");
+    return { kind: stmts.Node.Return, keyword, value };
   }
 
   private expression(): exprs.Expr {

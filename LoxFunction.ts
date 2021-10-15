@@ -1,5 +1,5 @@
 import { stmts } from "./ast";
-import { LoxCallable, LoxFunctionSignature } from "./ast/value";
+import { LoxCallable, LoxFunctionSignature, LoxValue } from "./ast/value";
 import { Environment } from "./environment";
 
 export class LoxFunction extends LoxCallable {
@@ -16,7 +16,15 @@ export class LoxFunction extends LoxCallable {
       environment.define(this.declaration.params[i].lexeme, args[i]);
     }
 
-    interpreter.executeBlock(this.declaration.body, environment);
+    try {
+      interpreter.executeBlock(this.declaration.body, environment);
+    } catch (err) {
+      if (err instanceof Return) {
+        return err.value;
+      }
+      throw err;
+    }
+
     return null;
   };
 
@@ -26,5 +34,12 @@ export class LoxFunction extends LoxCallable {
 
   toString() {
     return `<fn ${this.declaration.name.lexeme}>`;
+  }
+}
+
+export class Return {
+  value: LoxValue;
+  constructor(value: LoxValue) {
+    this.value = value;
   }
 }
