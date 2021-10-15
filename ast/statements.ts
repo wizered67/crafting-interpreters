@@ -5,6 +5,7 @@ export enum Node {
   Expression = "Expression",
   Print = "Print",
   Var = "Var",
+  Function = "Function",
   Block = "Block",
   If = "If",
   While = "While",
@@ -16,7 +17,8 @@ export type Statement =
   | VarStatement
   | BlockStatement
   | IfStatement
-  | WhileStatement;
+  | WhileStatement
+  | FunctionStatement;
 
 export type ExpressionStatement = {
   kind: Node.Expression;
@@ -32,6 +34,13 @@ export type VarStatement = {
   kind: Node.Var;
   name: Token;
   initializer: Expr | null;
+};
+
+export type FunctionStatement = {
+  kind: Node.Function;
+  name: Token;
+  params: Token[];
+  body: Statement[];
 };
 
 export type BlockStatement = {

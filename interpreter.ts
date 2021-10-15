@@ -2,18 +2,23 @@ import { Lox } from ".";
 import { exprs, stmts } from "./ast";
 import { LoxCallable, LoxValue } from "./ast/value";
 import { Environment } from "./environment";
+import { LoxFunction } from "./LoxFunction";
 import { RuntimeError } from "./RuntimeError";
 import { Token } from "./token";
 import { TokenType } from "./tokenType";
 
 export class Interpreter {
-  private readonly globals = new Environment();
+  readonly globals = new Environment();
   private environment = this.globals;
 
   constructor() {
     this.globals.define(
       "clock",
-      new LoxCallable(() => Date.now(), 0, "<native fn>"),
+      new (class extends LoxCallable {
+        arity = 0;
+        toString = () => "<native fn>";
+        call = () => Date.now();
+      })(),
     );
   }
 
@@ -71,15 +76,14 @@ export class Interpreter {
         return this.interpretIf(statement);
       case stmts.Node.While:
         return this.interpretWhile(statement);
+      case stmts.Node.Function:
+        return this.interpretFunctionDeclaration(statement);
       default:
         assertUnreachable(statement);
     }
   }
 
-  private executeBlock(
-    statements: stmts.Statement[],
-    environment: Environment,
-  ) {
+  executeBlock(statements: stmts.Statement[], environment: Environment) {
     const previousEnvironment = this.environment;
     try {
       this.environment = environment;
@@ -101,6 +105,11 @@ export class Interpreter {
   private interpretVariableDeclaration(stmt: stmts.VarStatement): void {
     const value = stmt.initializer ? this.evaluate(stmt.initializer) : null;
     this.environment.define(stmt.name.lexeme, value);
+  }
+
+  private interpretFunctionDeclaration(stmt: stmts.FunctionStatement): void {
+    const func = new LoxFunction(stmt);
+    this.environment.define(stmt.name.lexeme, func);
   }
 
   private interpretIf(stmt: stmts.IfStatement): void {
