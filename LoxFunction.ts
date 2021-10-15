@@ -3,15 +3,17 @@ import { LoxCallable, LoxFunctionSignature, LoxValue } from "./ast/value";
 import { Environment } from "./environment";
 
 export class LoxFunction extends LoxCallable {
+  private readonly closure: Environment;
   private readonly declaration: stmts.FunctionStatement;
 
-  constructor(declaration: stmts.FunctionStatement) {
+  constructor(declaration: stmts.FunctionStatement, closure: Environment) {
     super();
     this.declaration = declaration;
+    this.closure = closure;
   }
 
   call: LoxFunctionSignature = (interpreter, args) => {
-    const environment = new Environment(interpreter.globals);
+    const environment = new Environment(this.closure);
     for (let i = 0; i < this.declaration.params.length; i++) {
       environment.define(this.declaration.params[i].lexeme, args[i]);
     }
