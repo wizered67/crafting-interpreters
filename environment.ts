@@ -39,4 +39,21 @@ export class Environment {
       `Undefined variable ${nameToken.lexeme}.`,
     );
   }
+
+  getAt(distance: number, name: string): LoxValue {
+    return this.ancestor(distance).values.get(name)!;
+  }
+
+  assignAt(distance: number, name: Token, value: LoxValue) {
+    this.ancestor(distance).values.set(name.lexeme, value);
+  }
+
+  private ancestor(distance: number) {
+    let environment: Environment = this;
+    for (let i = 0; i < distance; i++) {
+      environment = environment.enclosing!;
+    }
+
+    return environment;
+  }
 }

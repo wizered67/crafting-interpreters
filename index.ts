@@ -3,6 +3,7 @@ import * as readline from "readline";
 import { printAst } from "./astPrinter";
 import { Interpreter } from "./interpreter";
 import { Parser } from "./parser";
+import { Resolver } from "./resolver";
 import { RuntimeError } from "./RuntimeError";
 import { Scanner } from "./scanner";
 import { Token } from "./token";
@@ -58,6 +59,12 @@ export class Lox {
     if (this.hadError) {
       return;
     }
+    const resolver = new Resolver(this.interpreter);
+    resolver.resolveStatements(statements);
+    if (this.hadError) {
+      return;
+    }
+
     this.interpreter.interpret(statements);
   }
 

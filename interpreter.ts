@@ -10,6 +10,7 @@ import { TokenType } from "./tokenType";
 export class Interpreter {
   readonly globals = new Environment();
   private environment = this.globals;
+  private readonly locals = new Map<exprs.Expr, number>();
 
   constructor() {
     this.globals.define(
@@ -49,9 +50,7 @@ export class Interpreter {
       case exprs.Node.Variable:
         return this.interpretVariable(expr);
       case exprs.Node.Assignment:
-        const value = this.evaluate(expr.value);
-        this.environment.assign(expr.name, value);
-        return value;
+        return this.interpretAssignment(expr);
       case exprs.Node.Call:
         return this.interpretCall(expr);
       default:
@@ -144,6 +143,19 @@ export class Interpreter {
     }
   }
 
+  private interpretAssignment(expr: exprs.Assignment) {
+    const value = this.evaluate(expr.value);
+
+    const distance = this.locals.get(expr);
+    if (distance !== undefined) {
+      this.environment.assignAt(distance, expr.name, value);
+    } else {
+      this.globals.assign(expr.name, value);
+    }
+
+    return value;
+  }
+
   private interpretBinary(binary: exprs.Binary): LoxValue {
     if (isLogicalBinary(binary)) {
       return this.interpretLogicalBinary(binary);
@@ -215,7 +227,16 @@ export class Interpreter {
   }
 
   private interpretVariable(variable: exprs.Variable) {
-    return this.environment.get(variable.name);
+    return this.lookUpVariable(variable.name, variable);
+  }
+
+  private lookUpVariable(name: Token, expr: exprs.Expr) {
+    const distance = this.locals.get(expr);
+    if (distance !== undefined) {
+      return this.environment.getAt(distance, name.lexeme);
+    } else {
+      return this.globals.get(name);
+    }
   }
 
   private interpretCall(call: exprs.Call) {
@@ -234,6 +255,10 @@ export class Interpreter {
       );
     }
     return callee.call(this, args);
+  }
+
+  resolve(expr: exprs.Expr, depth: number) {
+    this.locals.set(expr, depth);
   }
 }
 
