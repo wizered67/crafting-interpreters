@@ -57,6 +57,10 @@ export class Resolver {
         return this.resolveAll([node.left, node.right]);
       case exprs.Node.Call:
         return this.resolveAll([node.callee, ...node.args]);
+      case exprs.Node.Get:
+        return this.resolve(node.object);
+      case exprs.Node.Set:
+        return this.resolveAll([node.value, node.object]);
       case exprs.Node.Grouping:
         return this.resolve(node.expression);
       case exprs.Node.Literal:

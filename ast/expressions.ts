@@ -10,6 +10,8 @@ export enum Node {
   Variable = "Variable",
   Assignment = "Assignment",
   Call = "Call",
+  Get = "Get",
+  Set = "Set",
 }
 
 export type Expr =
@@ -19,7 +21,9 @@ export type Expr =
   | Unary
   | Variable
   | Assignment
-  | Call;
+  | Call
+  | Get
+  | Set;
 
 export type BinaryOperators =
   | TokenType.PLUS
@@ -76,4 +80,17 @@ export type Call = {
   callee: Expr;
   paren: Token;
   args: Expr[];
+};
+
+export type Get = {
+  kind: Node.Get;
+  object: Expr;
+  name: Token;
+};
+
+export type Set = {
+  kind: Node.Set;
+  object: Expr;
+  name: Token;
+  value: Expr;
 };

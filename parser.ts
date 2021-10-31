@@ -233,6 +233,13 @@ export class Parser {
       if (expr.kind === exprs.Node.Variable) {
         const name = expr.name;
         return { kind: exprs.Node.Assignment, name, value };
+      } else if (expr.kind === exprs.Node.Get) {
+        return {
+          kind: exprs.Node.Set,
+          object: expr.object,
+          name: expr.name,
+          value,
+        };
       }
       this.error(equals, "Invalid assignment target.");
     }
@@ -303,6 +310,12 @@ export class Parser {
     while (true) {
       if (this.match(TokenType.LEFT_PAREN)) {
         expr = this.finishCall(expr);
+      } else if (this.match(TokenType.DOT)) {
+        const name = this.consume(
+          TokenType.IDENTIFIER,
+          "Expect property name after '.'.",
+        );
+        expr = { kind: exprs.Node.Get, object: expr, name };
       } else {
         break;
       }

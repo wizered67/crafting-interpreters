@@ -7,6 +7,7 @@ import { RuntimeError } from "./RuntimeError";
 import { Token } from "./token";
 import { TokenType } from "./tokenType";
 import { LoxClass } from "./LoxClass";
+import { LoxInstance } from "./LoxInstance";
 
 export class Interpreter {
   readonly globals = new Environment();
@@ -54,6 +55,10 @@ export class Interpreter {
         return this.interpretAssignment(expr);
       case exprs.Node.Call:
         return this.interpretCall(expr);
+      case exprs.Node.Get:
+        return this.interpretGet(expr);
+      case exprs.Node.Set:
+        return this.interpretSet(expr);
       default:
         assertUnreachable(expr);
     }
@@ -264,6 +269,26 @@ export class Interpreter {
       );
     }
     return callee.call(this, args);
+  }
+
+  private interpretGet(get: exprs.Get) {
+    const object = this.evaluate(get.object);
+    if (object instanceof LoxInstance) {
+      return object.get(get.name);
+    }
+
+    throw new RuntimeError(get.name, "Only instances have properties.");
+  }
+
+  private interpretSet(set: exprs.Set) {
+    const object = this.evaluate(set.object);
+
+    if (!(object instanceof LoxInstance)) {
+      throw new RuntimeError(set.name, "Only instances have fields.");
+    }
+    const value = this.evaluate(set.value);
+    object.set(set.name, value);
+    return value;
   }
 
   resolve(expr: exprs.Expr, depth: number) {
