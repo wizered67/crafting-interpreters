@@ -6,6 +6,7 @@ import { Token } from "./token";
 enum FunctionType {
   NONE = "NONE",
   FUNCTION = "FUNCTION",
+  METHOD = "METHOD",
 }
 
 export class Resolver {
@@ -103,6 +104,11 @@ export class Resolver {
   private resolveClassStatement(statement: stmts.ClassStatement) {
     this.declare(statement.name);
     this.define(statement.name);
+
+    for (const method of statement.methods) {
+      const declaration = FunctionType.METHOD;
+      this.resolveFunction(method, declaration);
+    }
   }
 
   private resolveVariableExpr(expr: exprs.Variable) {
