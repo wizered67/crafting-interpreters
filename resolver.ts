@@ -9,10 +9,16 @@ enum FunctionType {
   METHOD = "METHOD",
 }
 
+enum ClassType {
+  NONE = "NONE",
+  CLASS = "CLASS",
+}
+
 export class Resolver {
   private readonly interpreter: Interpreter;
   private readonly scopes: Map<string, boolean>[] = [];
   private currentFunction: FunctionType = FunctionType.NONE;
+  private currentClass: ClassType = ClassType.NONE;
 
   constructor(interpreter: Interpreter) {
     this.interpreter = interpreter;
@@ -52,6 +58,8 @@ export class Resolver {
         return this.resolveAll([node.condition, node.body]);
       case exprs.Node.Variable:
         return this.resolveVariableExpr(node);
+      case exprs.Node.This:
+        return this.resolveThis(node);
       case exprs.Node.Assignment:
         return this.resolveAssignment(node);
       case exprs.Node.Binary:
@@ -102,13 +110,22 @@ export class Resolver {
   }
 
   private resolveClassStatement(statement: stmts.ClassStatement) {
+    const enclosingClass = this.currentClass;
+    this.currentClass = ClassType.CLASS;
+
     this.declare(statement.name);
     this.define(statement.name);
+
+    this.beginScope();
+    this.scopes[this.scopes.length - 1].set("this", true);
 
     for (const method of statement.methods) {
       const declaration = FunctionType.METHOD;
       this.resolveFunction(method, declaration);
     }
+
+    this.endScope();
+    this.currentClass = enclosingClass;
   }
 
   private resolveVariableExpr(expr: exprs.Variable) {
@@ -120,6 +137,14 @@ export class Resolver {
     }
 
     this.resolveLocal(expr, expr.name);
+  }
+
+  private resolveThis(expr: exprs.This) {
+    if (this.currentClass === ClassType.NONE) {
+      Lox.error(expr.keyword, "Can't use 'this' outside of a class.");
+      return;
+    }
+    this.resolveLocal(expr, expr.keyword);
   }
 
   private resolveAssignment(expr: exprs.Assignment) {

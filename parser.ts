@@ -356,6 +356,9 @@ export class Parser {
       const token = this.previous();
       return { kind: exprs.Node.Literal, value: token.literal };
     }
+    if (this.match(TokenType.THIS)) {
+      return { kind: exprs.Node.This, keyword: this.previous() };
+    }
 
     if (this.match(TokenType.IDENTIFIER)) {
       return { kind: exprs.Node.Variable, name: this.previous() };

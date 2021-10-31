@@ -12,6 +12,7 @@ export enum Node {
   Call = "Call",
   Get = "Get",
   Set = "Set",
+  This = "This",
 }
 
 export type Expr =
@@ -23,7 +24,8 @@ export type Expr =
   | Assignment
   | Call
   | Get
-  | Set;
+  | Set
+  | This;
 
 export type BinaryOperators =
   | TokenType.PLUS
@@ -93,4 +95,9 @@ export type Set = {
   object: Expr;
   name: Token;
   value: Expr;
+};
+
+export type This = {
+  kind: Node.This;
+  keyword: Token;
 };

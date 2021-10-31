@@ -1,6 +1,7 @@
 import { stmts } from "./ast";
 import { LoxCallable, LoxFunctionSignature, LoxValue } from "./ast/value";
 import { Environment } from "./environment";
+import { LoxInstance } from "./LoxInstance";
 
 export class LoxFunction extends LoxCallable {
   private readonly closure: Environment;
@@ -36,6 +37,12 @@ export class LoxFunction extends LoxCallable {
 
   stringify() {
     return `<fn ${this.declaration.name.lexeme}>`;
+  }
+
+  bind(instance: LoxInstance) {
+    const environment = new Environment(this.closure);
+    environment.define("this", instance);
+    return new LoxFunction(this.declaration, environment);
   }
 }
 

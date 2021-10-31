@@ -51,6 +51,8 @@ export class Interpreter {
         return this.evaluate(expr.expression);
       case exprs.Node.Variable:
         return this.interpretVariable(expr);
+      case exprs.Node.This:
+        return this.interpretThis(expr);
       case exprs.Node.Assignment:
         return this.interpretAssignment(expr);
       case exprs.Node.Call:
@@ -249,6 +251,10 @@ export class Interpreter {
 
   private interpretVariable(variable: exprs.Variable) {
     return this.lookUpVariable(variable.name, variable);
+  }
+
+  private interpretThis(thisExpr: exprs.This) {
+    return this.lookUpVariable(thisExpr.keyword, thisExpr);
   }
 
   private lookUpVariable(name: Token, expr: exprs.Expr) {
