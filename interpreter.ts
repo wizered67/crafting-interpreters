@@ -6,6 +6,7 @@ import { LoxFunction, Return } from "./LoxFunction";
 import { RuntimeError } from "./RuntimeError";
 import { Token } from "./token";
 import { TokenType } from "./tokenType";
+import { LoxClass } from "./LoxClass";
 
 export class Interpreter {
   readonly globals = new Environment();
@@ -17,7 +18,7 @@ export class Interpreter {
       "clock",
       new (class extends LoxCallable {
         arity = 0;
-        toString = () => "<native fn>";
+        stringify = () => "<native fn>";
         call = () => Date.now();
       })(),
     );
@@ -77,6 +78,8 @@ export class Interpreter {
         return this.interpretWhile(statement);
       case stmts.Node.Function:
         return this.interpretFunctionDeclaration(statement);
+      case stmts.Node.Class:
+        return this.interpretClassDeclaration(statement);
       case stmts.Node.Return:
         return this.interpretReturn(statement);
       default:
@@ -111,6 +114,12 @@ export class Interpreter {
   private interpretFunctionDeclaration(stmt: stmts.FunctionStatement): void {
     const func = new LoxFunction(stmt, this.environment);
     this.environment.define(stmt.name.lexeme, func);
+  }
+
+  private interpretClassDeclaration(stmt: stmts.ClassStatement): void {
+    this.environment.define(stmt.name.lexeme, null);
+    const klass = new LoxClass(stmt.name.lexeme);
+    this.environment.assign(stmt.name, klass);
   }
 
   private interpretIf(stmt: stmts.IfStatement): void {
@@ -289,7 +298,10 @@ function stringify(value: LoxValue): string {
   if (value === null) {
     return "nil";
   }
-  return `${value}`;
+  if (typeof value !== "object") {
+    return `${value}`;
+  }
+  return value.stringify();
 }
 
 function assertUnreachable(value: never): never {

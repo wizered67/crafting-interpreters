@@ -34,7 +34,7 @@ export class LoxFunction extends LoxCallable {
     return this.declaration.params.length;
   }
 
-  toString() {
+  stringify() {
     return `<fn ${this.declaration.name.lexeme}>`;
   }
 }

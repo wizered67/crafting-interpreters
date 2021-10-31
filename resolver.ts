@@ -34,6 +34,8 @@ export class Resolver {
         return this.resolveVarStatement(node);
       case stmts.Node.Function:
         return this.resolveFunctionStatement(node);
+      case stmts.Node.Class:
+        return this.resolveClassStatement(node);
       case stmts.Node.Expression:
         return this.resolve(node.expression);
       case stmts.Node.If:
@@ -92,6 +94,11 @@ export class Resolver {
     this.declare(statement.name);
     this.define(statement.name);
     this.resolveFunction(statement, FunctionType.FUNCTION);
+  }
+
+  private resolveClassStatement(statement: stmts.ClassStatement) {
+    this.declare(statement.name);
+    this.define(statement.name);
   }
 
   private resolveVariableExpr(expr: exprs.Variable) {

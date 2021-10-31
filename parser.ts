@@ -32,6 +32,9 @@ export class Parser {
       if (this.match(TokenType.VAR)) {
         return this.varDeclaration();
       }
+      if (this.match(TokenType.CLASS)) {
+        return this.classDeclaration();
+      }
       return this.statement();
     } catch (err: unknown) {
       if (err instanceof ParseError) {
@@ -42,7 +45,7 @@ export class Parser {
     }
   }
 
-  private functionDeclaration(kind: string): stmts.Statement {
+  private functionDeclaration(kind: string): stmts.FunctionStatement {
     const name = this.consume(TokenType.IDENTIFIER, `Expect ${kind} name.`);
     this.consume(TokenType.LEFT_PAREN, `Expect '(' after ${kind} name.`);
 
@@ -77,6 +80,20 @@ export class Parser {
     }
     this.consume(TokenType.SEMICOLON, "Expect ';' after value.");
     return { kind: stmts.Node.Var, name: identifier, initializer: expression };
+  }
+
+  private classDeclaration(): stmts.Statement {
+    const name = this.consume(TokenType.IDENTIFIER, "Expect class name.");
+    this.consume(TokenType.LEFT_BRACE, "Expect '{' before class body.");
+
+    const methods: stmts.FunctionStatement[] = [];
+    while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
+      methods.push(this.functionDeclaration("method"));
+    }
+
+    this.consume(TokenType.RIGHT_BRACE, "Expect '}' fter class body.");
+
+    return { kind: stmts.Node.Class, name, methods };
   }
 
   private statement(): stmts.Statement {

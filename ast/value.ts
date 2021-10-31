@@ -1,6 +1,15 @@
 import { Interpreter } from "../interpreter";
+import { LoxClass } from "../LoxClass";
+import { LoxInstance } from "../LoxInstance";
 
-export type LoxValue = string | number | boolean | null | LoxCallable;
+export type LoxValue =
+  | string
+  | number
+  | boolean
+  | null
+  | LoxCallable
+  | LoxClass
+  | LoxInstance;
 
 export type LoxFunctionSignature = (
   interpreter: Interpreter,
@@ -10,5 +19,5 @@ export type LoxFunctionSignature = (
 export abstract class LoxCallable {
   abstract arity: number;
   abstract call: LoxFunctionSignature;
-  abstract toString(): string;
+  abstract stringify(): string;
 }
