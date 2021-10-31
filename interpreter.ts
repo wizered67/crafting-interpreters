@@ -119,7 +119,7 @@ export class Interpreter {
   }
 
   private interpretFunctionDeclaration(stmt: stmts.FunctionStatement): void {
-    const func = new LoxFunction(stmt, this.environment);
+    const func = new LoxFunction(stmt, this.environment, false);
     this.environment.define(stmt.name.lexeme, func);
   }
 
@@ -128,7 +128,11 @@ export class Interpreter {
 
     const methods = new Map<string, LoxFunction>();
     for (const method of stmt.methods) {
-      const fn = new LoxFunction(method, this.environment);
+      const fn = new LoxFunction(
+        method,
+        this.environment,
+        method.name.lexeme === "init",
+      );
       methods.set(method.name.lexeme, fn);
     }
 
@@ -278,7 +282,7 @@ export class Interpreter {
     if (args.length !== callee.arity) {
       throw new RuntimeError(
         call.paren,
-        `Expected ${callee.arity} arguments but got ${arguments.length}.`,
+        `Expected ${callee.arity} arguments but got ${args.length}.`,
       );
     }
     return callee.call(this, args);

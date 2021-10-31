@@ -6,11 +6,17 @@ import { LoxInstance } from "./LoxInstance";
 export class LoxFunction extends LoxCallable {
   private readonly closure: Environment;
   private readonly declaration: stmts.FunctionStatement;
+  private readonly isInitializer: boolean;
 
-  constructor(declaration: stmts.FunctionStatement, closure: Environment) {
+  constructor(
+    declaration: stmts.FunctionStatement,
+    closure: Environment,
+    isInitializer: boolean,
+  ) {
     super();
     this.declaration = declaration;
     this.closure = closure;
+    this.isInitializer = isInitializer;
   }
 
   call: LoxFunctionSignature = (interpreter, args) => {
@@ -23,11 +29,17 @@ export class LoxFunction extends LoxCallable {
       interpreter.executeBlock(this.declaration.body, environment);
     } catch (err) {
       if (err instanceof Return) {
+        if (this.isInitializer) {
+          return this.closure.getAt(0, "this");
+        }
         return err.value;
       }
       throw err;
     }
 
+    if (this.isInitializer) {
+      return this.closure.getAt(0, "this");
+    }
     return null;
   };
 
@@ -42,7 +54,7 @@ export class LoxFunction extends LoxCallable {
   bind(instance: LoxInstance) {
     const environment = new Environment(this.closure);
     environment.define("this", instance);
-    return new LoxFunction(this.declaration, environment);
+    return new LoxFunction(this.declaration, environment, this.isInitializer);
   }
 }
 

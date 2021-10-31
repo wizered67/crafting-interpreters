@@ -1,7 +1,6 @@
 import { LoxCallable, LoxFunctionSignature } from "./ast/value";
 import { LoxFunction } from "./LoxFunction";
 import { LoxInstance } from "./LoxInstance";
-import { Token } from "./token";
 
 export class LoxClass extends LoxCallable {
   readonly name: string;
@@ -19,11 +18,19 @@ export class LoxClass extends LoxCallable {
 
   call: LoxFunctionSignature = (interpreter, args) => {
     const instance = new LoxInstance(this);
+    const initializer = this.findMethod("init");
+    if (initializer) {
+      initializer.bind(instance).call(interpreter, args);
+    }
     return instance;
   };
 
   get arity() {
-    return 0;
+    const initializer = this.findMethod("init");
+    if (!initializer) {
+      return 0;
+    }
+    return initializer.arity;
   }
 
   findMethod(name: string) {
@@ -31,6 +38,6 @@ export class LoxClass extends LoxCallable {
       return this.methods.get(name);
     }
 
-    return null;
+    return undefined;
   }
 }

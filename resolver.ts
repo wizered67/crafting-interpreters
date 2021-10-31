@@ -6,6 +6,7 @@ import { Token } from "./token";
 enum FunctionType {
   NONE = "NONE",
   FUNCTION = "FUNCTION",
+  INITIALIZER = "INITIALIZER",
   METHOD = "METHOD",
 }
 
@@ -50,10 +51,7 @@ export class Resolver {
       case stmts.Node.Print:
         return this.resolve(node.expression);
       case stmts.Node.Return:
-        if (this.currentFunction === FunctionType.NONE) {
-          Lox.error(node.keyword, "Can't return from top-level code.");
-        }
-        return this.resolve(node.value);
+        return this.resolveReturn(node);
       case stmts.Node.While:
         return this.resolveAll([node.condition, node.body]);
       case exprs.Node.Variable:
@@ -120,7 +118,10 @@ export class Resolver {
     this.scopes[this.scopes.length - 1].set("this", true);
 
     for (const method of statement.methods) {
-      const declaration = FunctionType.METHOD;
+      const declaration =
+        method.name.lexeme === "init"
+          ? FunctionType.INITIALIZER
+          : FunctionType.METHOD;
       this.resolveFunction(method, declaration);
     }
 
@@ -173,6 +174,18 @@ export class Resolver {
     this.resolveStatements(func.body);
     this.endScope();
     this.currentFunction = enclosingFunction;
+  }
+
+  private resolveReturn(stmt: stmts.ReturnStatement) {
+    if (this.currentFunction === FunctionType.NONE) {
+      Lox.error(stmt.keyword, "Can't return from top-level code.");
+    }
+    if (stmt.value !== undefined) {
+      if (this.currentFunction === FunctionType.INITIALIZER) {
+        Lox.error(stmt.keyword, "Can't return a value from an initializer.");
+      }
+      this.resolve(stmt.value);
+    }
   }
 
   private beginScope() {
