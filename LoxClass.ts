@@ -5,10 +5,16 @@ import { LoxInstance } from "./LoxInstance";
 export class LoxClass extends LoxCallable {
   readonly name: string;
   private readonly methods: Map<string, LoxFunction>;
+  readonly superclass: LoxClass | undefined;
 
-  constructor(name: string, methods: Map<string, LoxFunction>) {
+  constructor(
+    name: string,
+    superclass: LoxClass | undefined,
+    methods: Map<string, LoxFunction>,
+  ) {
     super();
     this.name = name;
+    this.superclass = superclass;
     this.methods = methods;
   }
 
@@ -33,9 +39,12 @@ export class LoxClass extends LoxCallable {
     return initializer.arity;
   }
 
-  findMethod(name: string) {
+  findMethod(name: string): LoxFunction | undefined {
     if (this.methods.has(name)) {
       return this.methods.get(name);
+    }
+    if (this.superclass) {
+      return this.superclass.findMethod(name);
     }
 
     return undefined;

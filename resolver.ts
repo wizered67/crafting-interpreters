@@ -13,6 +13,7 @@ enum FunctionType {
 enum ClassType {
   NONE = "NONE",
   CLASS = "CLASS",
+  SUBCLASS = "SUBCLASS",
 }
 
 export class Resolver {
@@ -58,6 +59,8 @@ export class Resolver {
         return this.resolveVariableExpr(node);
       case exprs.Node.This:
         return this.resolveThis(node);
+      case exprs.Node.Super:
+        return this.resolveSuper(node);
       case exprs.Node.Assignment:
         return this.resolveAssignment(node);
       case exprs.Node.Binary:
@@ -114,8 +117,24 @@ export class Resolver {
     this.declare(statement.name);
     this.define(statement.name);
 
+    if (statement.superclass) {
+      this.currentClass = ClassType.SUBCLASS;
+      if (statement.name.lexeme === statement.superclass.name.lexeme) {
+        Lox.error(
+          statement.superclass.name,
+          "A class can't inherit from itself.",
+        );
+      }
+      this.resolve(statement.superclass);
+    }
+
+    if (statement.superclass) {
+      this.beginScope();
+      this.peekScope().set("super", true);
+    }
+
     this.beginScope();
-    this.scopes[this.scopes.length - 1].set("this", true);
+    this.peekScope().set("this", true);
 
     for (const method of statement.methods) {
       const declaration =
@@ -126,13 +145,18 @@ export class Resolver {
     }
 
     this.endScope();
+
+    if (statement.superclass) {
+      this.endScope();
+    }
+
     this.currentClass = enclosingClass;
   }
 
   private resolveVariableExpr(expr: exprs.Variable) {
     if (
       this.scopes.length > 0 &&
-      this.scopes[this.scopes.length - 1].get(expr.name.lexeme) === false
+      this.peekScope().get(expr.name.lexeme) === false
     ) {
       Lox.error(expr.name, "Can't read local variable in its own initializer.");
     }
@@ -144,6 +168,18 @@ export class Resolver {
     if (this.currentClass === ClassType.NONE) {
       Lox.error(expr.keyword, "Can't use 'this' outside of a class.");
       return;
+    }
+    this.resolveLocal(expr, expr.keyword);
+  }
+
+  private resolveSuper(expr: exprs.Super) {
+    if (this.currentClass === ClassType.NONE) {
+      Lox.error(expr.keyword, "Can't use 'super' outside of a class.");
+    } else if (this.currentClass !== ClassType.SUBCLASS) {
+      Lox.error(
+        expr.keyword,
+        "Can't use 'super' in a class with no superclass.",
+      );
     }
     this.resolveLocal(expr, expr.keyword);
   }
@@ -188,6 +224,10 @@ export class Resolver {
     }
   }
 
+  private peekScope() {
+    return this.scopes[this.scopes.length - 1];
+  }
+
   private beginScope() {
     this.scopes.push(new Map());
   }
@@ -200,7 +240,7 @@ export class Resolver {
     if (this.scopes.length === 0) {
       return;
     }
-    const scope = this.scopes[this.scopes.length - 1];
+    const scope = this.peekScope();
     if (scope.has(name.lexeme)) {
       Lox.error(name, "Already a variable with this name in this scope.");
     }
@@ -212,7 +252,7 @@ export class Resolver {
     if (this.scopes.length === 0) {
       return;
     }
-    const scope = this.scopes[this.scopes.length - 1];
+    const scope = this.peekScope();
     scope.set(name.lexeme, true);
   }
 }

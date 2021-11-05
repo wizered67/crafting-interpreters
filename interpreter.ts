@@ -53,6 +53,8 @@ export class Interpreter {
         return this.interpretVariable(expr);
       case exprs.Node.This:
         return this.interpretThis(expr);
+      case exprs.Node.Super:
+        return this.interpretSuper(expr);
       case exprs.Node.Assignment:
         return this.interpretAssignment(expr);
       case exprs.Node.Call:
@@ -124,7 +126,23 @@ export class Interpreter {
   }
 
   private interpretClassDeclaration(stmt: stmts.ClassStatement): void {
+    let superclass;
+    if (stmt.superclass) {
+      superclass = this.evaluate(stmt.superclass);
+      if (!(superclass instanceof LoxClass)) {
+        throw new RuntimeError(
+          stmt.superclass.name,
+          "Superclass must be a class.",
+        );
+      }
+    }
+
     this.environment.define(stmt.name.lexeme, null);
+
+    if (superclass) {
+      this.environment = new Environment(this.environment);
+      this.environment.define("super", superclass);
+    }
 
     const methods = new Map<string, LoxFunction>();
     for (const method of stmt.methods) {
@@ -136,7 +154,12 @@ export class Interpreter {
       methods.set(method.name.lexeme, fn);
     }
 
-    const klass = new LoxClass(stmt.name.lexeme, methods);
+    const klass = new LoxClass(stmt.name.lexeme, superclass, methods);
+
+    if (superclass) {
+      this.environment = this.environment.enclosing!;
+    }
+
     this.environment.assign(stmt.name, klass);
   }
 
@@ -259,6 +282,30 @@ export class Interpreter {
 
   private interpretThis(thisExpr: exprs.This) {
     return this.lookUpVariable(thisExpr.keyword, thisExpr);
+  }
+
+  private interpretSuper(superExpr: exprs.Super) {
+    const distance = this.locals.get(superExpr);
+    if (distance === undefined) {
+      throw new Error("Expect invariant that super is found.");
+    }
+    const superclass = this.environment.getAt(distance, "super");
+    if (!(superclass instanceof LoxClass)) {
+      throw new Error("Expect invariant that superclass is a class.");
+    }
+    const object = this.environment.getAt(distance - 1, "this");
+    if (!(object instanceof LoxInstance)) {
+      throw new Error("Expect invariant that object is an instance.");
+    }
+
+    const method = superclass.findMethod(superExpr.method.lexeme);
+    if (!method) {
+      throw new RuntimeError(
+        superExpr.method,
+        `Undefined property '${superExpr.method.lexeme}'.`,
+      );
+    }
+    return method.bind(object);
   }
 
   private lookUpVariable(name: Token, expr: exprs.Expr) {

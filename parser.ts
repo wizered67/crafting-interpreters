@@ -84,6 +84,11 @@ export class Parser {
 
   private classDeclaration(): stmts.Statement {
     const name = this.consume(TokenType.IDENTIFIER, "Expect class name.");
+    let superclass: exprs.Variable | undefined;
+    if (this.match(TokenType.LESS)) {
+      this.consume(TokenType.IDENTIFIER, "Expect superclass name");
+      superclass = { kind: exprs.Node.Variable, name: this.previous() };
+    }
     this.consume(TokenType.LEFT_BRACE, "Expect '{' before class body.");
 
     const methods: stmts.FunctionStatement[] = [];
@@ -93,7 +98,7 @@ export class Parser {
 
     this.consume(TokenType.RIGHT_BRACE, "Expect '}' fter class body.");
 
-    return { kind: stmts.Node.Class, name, methods };
+    return { kind: stmts.Node.Class, name, superclass, methods };
   }
 
   private statement(): stmts.Statement {
@@ -358,6 +363,15 @@ export class Parser {
     }
     if (this.match(TokenType.THIS)) {
       return { kind: exprs.Node.This, keyword: this.previous() };
+    }
+    if (this.match(TokenType.SUPER)) {
+      const keyword = this.previous();
+      this.consume(TokenType.DOT, "Expect '.' after 'super'.");
+      const method = this.consume(
+        TokenType.IDENTIFIER,
+        "Expect superclass method name.",
+      );
+      return { kind: exprs.Node.Super, keyword, method };
     }
 
     if (this.match(TokenType.IDENTIFIER)) {

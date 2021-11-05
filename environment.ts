@@ -3,7 +3,7 @@ import { RuntimeError } from "./RuntimeError";
 import { Token } from "./token";
 
 export class Environment {
-  private readonly enclosing?: Environment;
+  readonly enclosing?: Environment;
   private readonly values: Map<string, LoxValue> = new Map();
 
   constructor(enclosing?: Environment) {

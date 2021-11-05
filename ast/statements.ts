@@ -1,5 +1,5 @@
 import { Token } from "../token";
-import { Expr } from "./expressions";
+import { Expr, Variable } from "./expressions";
 
 export enum Node {
   Expression = "Expression",
@@ -74,5 +74,6 @@ export type ReturnStatement = {
 export type ClassStatement = {
   kind: Node.Class;
   name: Token;
+  superclass?: Variable;
   methods: FunctionStatement[];
 };
